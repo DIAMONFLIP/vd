@@ -2,7 +2,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "Violence District By Billyz",
-   LoadingTitle = "Loading Optimized Hub...",
+   LoadingTitle = "Loading Fixed ESP Hub...",
    LoadingSubtitle = "By Billyz",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
@@ -13,7 +13,7 @@ local MainTab = Window:CreateTab("Main", 4483362458)
 local KillerTab = Window:CreateTab("Killer / Combat", 4483362458)
 local SurvivalTab = Window:CreateTab("Survival & Map", 4483362458)
 local PlayerTab = Window:CreateTab("Player", 4483362458)
-local ESPTab = Window:CreateTab("ESP (Dedicated)", 4483362458) -- Tab แยกสำหรับระบบ ESP โดยเฉพาะ
+local ESPTab = Window:CreateTab("ESP (Dedicated)", 4483362458)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -27,7 +27,6 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- ==================== Crosshair System ====================
 local CROSSHAIR_COLOR = Color3.fromRGB(255, 0, 0)
-local DOT_SIZE = 5 
 local GUI_NAME = "CrosshairGui"
 if PlayerGui:FindFirstChild(GUI_NAME) then PlayerGui[GUI_NAME]:Destroy() end
 
@@ -39,8 +38,8 @@ crosshairGui.Parent = PlayerGui
 
 local dot = Instance.new("Frame")
 dot.Name = "Dot"
-dot.Size = UDim2.new(0, DOT_SIZE, 0, DOT_SIZE)
-dot.Position = UDim2.new(0.5, -DOT_SIZE / 2, 0.5, -DOT_SIZE / 2 - 20)
+dot.Size = UDim2.new(0, 5, 0, 5)
+dot.Position = UDim2.new(0.5, -2.5, 0.5, -22.5)
 dot.BackgroundColor3 = CROSSHAIR_COLOR
 dot.BorderSizePixel = 0
 dot.Parent = crosshairGui
@@ -184,7 +183,7 @@ end)
 
 
 -- ==================== 3. Survival & Map Tab ====================
-SurvivalTab:CreateSection("Map Actions")
+SurvivalTab:CreateSection("Map Automation")
 
 local autoGenEnabled = false
 SurvivalTab:CreateToggle({
@@ -218,30 +217,17 @@ end)
 
 -- ==================== 4. Player Tab ====================
 PlayerTab:CreateSection("Player Utilities")
-PlayerTab:CreateParagraph({Title = "Info", Content = "ฟังก์ชันเสริมสำหรับผู้เล่นสามารถเปิดใช้งานเพิ่มเติมได้ที่นี่"})
+PlayerTab:CreateParagraph({Title = "Info", Content = "การตั้งค่าเสริมสำหรับตัวละคร"})
 
 
--- ==================== 5. ESP Tab (Dedicated Separate ESP) ====================
-ESPTab:CreateSection("1. Player ESP (แยกบทบาทชัดเจน)")
+-- ==================== 5. ESP Tab (FIXED & DEDICATED) ====================
+ESPTab:CreateSection("1. Player ESP (ออร่าผู้เล่นแยกสี)")
 
 local playerEspEnabled = false
-ESPTab:CreateToggle({
-   Name = "Enable Player ESP",
-   CurrentValue = false,
-   Callback = function(Value)
-      playerEspEnabled = Value
-      for _, p in ipairs(Players:GetPlayers()) do
-         if p ~= LocalPlayer and p.Character then
-            local hl = p.Character:FindFirstChild("DedicatedPlayerESP")
-            if hl then hl.Enabled = Value end
-         end
-      end
-   end,
-})
 
 local function getRoleColor(player, character)
    if character:GetAttribute("IsKiller") or character:GetAttribute("Killer") or character:GetAttribute("Murderer") then
-      return Color3.fromRGB(255, 50, 50) -- สีแดงสำหรับฆาตกร / Murderer
+      return Color3.fromRGB(255, 50, 50) -- สีแดง (Killer)
    end
    
    local backpack = player:FindFirstChild("Backpack")
@@ -251,70 +237,118 @@ local function getRoleColor(player, character)
             if item:IsA("Tool") then
                local tName = string.lower(item.Name)
                if tName:find("knife") or tName:find("sword") or tName:find("bat") or tName:find("weapon") then
-                  return Color3.fromRGB(255, 50, 50) -- สีแดง (ถืออาวุธ)
+                  return Color3.fromRGB(255, 50, 50) -- สีแดง
                elseif tName:find("revolver") or tName:find("gun") then
-                  return Color3.fromRGB(50, 255, 50) -- สีเขียวสำหรับตำรวจ / Sheriff
+                  return Color3.fromRGB(50, 255, 50) -- สีเขียว (Sheriff)
                end
             end
          end
       end
    end
    
-   return Color3.fromRGB(50, 150, 255) -- สีฟ้าสำหรับผู้รอดชีวิตทั่วไป / Innocent
+   return Color3.fromRGB(50, 150, 255) -- สีฟ้า (Survivor)
 end
 
-local function setupDedicatedPlayerESP(player)
-   if player == LocalPlayer then return end
-   
-   local function applyESP(char)
-      if not char then return end
-      local hl = char:FindFirstChild("DedicatedPlayerESP")
-      if not hl then
-         hl = Instance.new("Highlight")
-         hl.Name = "DedicatedPlayerESP"
-         hl.Adornee = char
-         hl.FillTransparency = 0.4
-         hl.OutlineTransparency = 0
-         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-         hl.Enabled = playerEspEnabled
-         hl.Parent = char
-      end
-      
-      task.spawn(function()
-         while char and char.Parent and hl.Parent do
-            if playerEspEnabled then
-               hl.Enabled = true
-               hl.FillColor = getRoleColor(player, char)
-               hl.OutlineColor = hl.FillColor
-            else
-               hl.Enabled = false
+local function updatePlayerESP()
+   for _, player in ipairs(Players:GetPlayers()) do
+      if player ~= LocalPlayer and player.Character then
+         local char = player.Character
+         local hl = char:FindFirstChild("BillyzESP")
+         
+         if playerEspEnabled then
+            if not hl then
+               hl = Instance.new("Highlight")
+               hl.Name = "BillyzESP"
+               hl.Adornee = char
+               hl.FillTransparency = 0.4
+               hl.OutlineTransparency = 0
+               hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+               hl.Parent = char
             end
-            task.wait(1.0)
+            local color = getRoleColor(player, char)
+            hl.FillColor = color
+            hl.OutlineColor = color
+            hl.Enabled = true
+         else
+            if hl then hl:Destroy() end
          end
-      end)
+      end
    end
-
-   player.CharacterAdded:Connect(applyESP)
-   if player.Character then applyESP(player.Character) end
 end
 
-for _, p in ipairs(Players:GetPlayers()) do setupDedicatedPlayerESP(p) end
-Players.PlayerAdded:Connect(setupDedicatedPlayerESP)
+ESPTab:CreateToggle({
+   Name = "Enable Player ESP (มองผู้เล่นทะลุกำแพง)",
+   CurrentValue = false,
+   Callback = function(Value)
+      playerEspEnabled = Value
+      updatePlayerESP()
+   end,
+})
+
+-- ลูปอัปเดตสี/ผู้เล่นเกิดใหม่ แบบไม่กิน FPS
+task.spawn(function()
+   while true do
+      if playerEspEnabled then
+         updatePlayerESP()
+      end
+      task.wait(1.0)
+   end
+end)
 
 
-ESPTab:CreateSection("2. Map Objects ESP (ESP วัตถุในแมพแยกประเภท)")
+ESPTab:CreateSection("2. Map ESP (เครื่องปั่นไฟ / วัตถุ)")
 
 local genEspEnabled = false
 local itemEspEnabled = false
+
+local function scanMapObjects()
+   for _, obj in ipairs(workspace:GetDescendants()) do
+      if obj:IsA("Model") or obj:IsA("BasePart") then
+         local n = string.lower(obj.Name)
+         
+         -- เครื่องปั่นไฟ / Objective / เครื่องจักร
+         if genEspEnabled and (n:find("generator") or n:find("gen") or n:find("machine") or n:find("engine") or n:find("objective") or n:find("coin")) then
+            local hl = obj:FindFirstChild("BillyzMapGenESP")
+            if not hl then
+               hl = Instance.new("Highlight")
+               hl.Name = "BillyzMapGenESP"
+               hl.Adornee = obj
+               hl.FillColor = Color3.fromRGB(230, 200, 50) -- สีเหลือง
+               hl.FillTransparency = 0.4
+               hl.OutlineTransparency = 0
+               hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+               hl.Parent = obj
+            end
+         end
+         
+         -- ไอเทม / ไม้พับ / ปืน / หน้าต่าง
+         if itemEspEnabled and (n:find("pallet") or n:find("wood") or n:find("board") or n:find("gun") or n:find("drop") or n:find("window")) and not n:find("break") then
+            local hl = obj:FindFirstChild("BillyzMapItemESP")
+            if not hl then
+               hl = Instance.new("Highlight")
+               hl.Name = "BillyzMapItemESP"
+               hl.Adornee = obj
+               hl.FillColor = Color3.fromRGB(255, 120, 0) -- สีส้ม
+               hl.FillTransparency = 0.4
+               hl.OutlineTransparency = 0
+               hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+               hl.Parent = obj
+            end
+         end
+      end
+   end
+end
 
 ESPTab:CreateToggle({
    Name = "ESP Generators / Objectives (เครื่องปั่นไฟ)",
    CurrentValue = false,
    Callback = function(Value)
       genEspEnabled = Value
-      if not Value then
+      if Value then
+         scanMapObjects()
+      else
          for _, obj in ipairs(workspace:GetDescendants()) do
-            local hl = obj:FindFirstChild("MapObjESP_Gen")
+            local hl = obj:FindFirstChild("BillyzMapGenESP")
             if hl then hl:Destroy() end
          end
       end
@@ -322,54 +356,27 @@ ESPTab:CreateToggle({
 })
 
 ESPTab:CreateToggle({
-   Name = "ESP Items / Pallets / Guns (ไอเทม/ไม้พับ/ปืนตกพื้น)",
+   Name = "ESP Items / Pallets / Guns (ไม้พับ/ปืน/หน้าต่าง)",
    CurrentValue = false,
    Callback = function(Value)
       itemEspEnabled = Value
-      if not Value then
+      if Value then
+         scanMapObjects()
+      else
          for _, obj in ipairs(workspace:GetDescendants()) do
-            local hl = obj:FindFirstChild("MapObjESP_Item")
+            local hl = obj:FindFirstChild("BillyzMapItemESP")
             if hl then hl:Destroy() end
          end
       end
    end,
 })
 
--- ลูปสแกนวัตถุในแมพแบบแยกหมวดหมู่เพื่อความลื่นไหล
 task.spawn(function()
    while true do
       if genEspEnabled or itemEspEnabled then
-         for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("Model") or obj:IsA("BasePart") then
-               local n = string.lower(obj.Name)
-               
-               -- หมวดเครื่องปั่นไฟ / เป้าหมาย
-               if genEspEnabled and (n:find("generator") or n:find("gen") or n:find("machine") or n:find("coin")) then
-                  if not obj:FindFirstChild("MapObjESP_Gen") then
-                     local hl = Instance.new("Highlight")
-                     hl.Name = "MapObjESP_Gen"
-                     hl.Adornee = obj
-                     hl.FillColor = Color3.fromRGB(230, 200, 50) -- สีเหลืองทอง
-                     hl.FillTransparency = 0.5
-                     hl.Parent = obj
-                  end
-               end
-               
-               -- หมวดไอเทม / ไม้พับ / ปืนตกพื้น
-               if itemEspEnabled and (n:find("pallet") or n:find("wood") or n:find("board") or n:find("gun") or n:find("drop")) and not n:find("break") then
-                  if not obj:FindFirstChild("MapObjESP_Item") then
-                     local hl = Instance.new("Highlight")
-                     hl.Name = "MapObjESP_Item"
-                     hl.Adornee = obj
-                     hl.FillColor = Color3.fromRGB(255, 120, 0) -- สีส้ม
-                     hl.FillTransparency = 0.5
-                     hl.Parent = obj
-                  end
-               end
-            end
-         end
+         scanMapObjects()
       end
-      task.wait(3.0)
+      task.wait(2.0)
    end
 end)
 
