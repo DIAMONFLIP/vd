@@ -21,6 +21,7 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
+-- ==================== Tabs ====================
 local MainTab = Window:CreateTab("Main", 4483362458)
 local KillerTab = Window:CreateTab("Killer", 4483362458)
 local SurvivalTab = Window:CreateTab("Survival", 4483362458)
@@ -30,11 +31,13 @@ local ESPTab = Window:CreateTab("ESP", 4483362458)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local VirtualUser = game:GetService("VirtualUser")
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+-- ==================== Crosshair System ====================
 local CROSSHAIR_COLOR = Color3.fromRGB(255, 0, 0)
 local DOT_SIZE = 5 
 local GUI_NAME = "CrosshairGui"
@@ -47,7 +50,7 @@ end
 local crosshairGui = Instance.new("ScreenGui")
 crosshairGui.Name = GUI_NAME
 crosshairGui.ResetOnSpawn = false
-crosshairGui.Enabled = false 
+crosshairGui.Enabled = false
 crosshairGui.Parent = PlayerGui
 
 local dot = Instance.new("Frame")
@@ -63,6 +66,7 @@ corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = dot
 
 
+-- ==================== 1. Main Tab ====================
 MainTab:CreateSection("Movement & Character")
 
 local walkSpeedEnabled = false
@@ -181,7 +185,6 @@ UserInputService.JumpRequest:Connect(function()
    end
 end)
 
--- Crosshair Toggle in Main
 MainTab:CreateToggle({
    Name = "Crosshair (เป้าเล็งกลางจอ)",
    CurrentValue = false,
@@ -192,6 +195,7 @@ MainTab:CreateToggle({
 })
 
 
+-- ==================== 2. Killer Tab (Global Hitbox Extender) ====================
 KillerTab:CreateSection("Killer Combat & Utilities")
 
 local killerSettings = {
@@ -222,11 +226,21 @@ KillerTab:CreateToggle({
 })
 
 KillerTab:CreateToggle({
-   Name = "Hitbox Extender (ขยาย Hitbox)",
+   Name = "Hitbox Extender (ขยาย Hitbox ทุกแมพ)",
    CurrentValue = false,
    Flag = "HitboxToggle",
    Callback = function(Value)
       killerSettings.Hitbox = Value
+      if not Value then
+         for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+               local hrp = player.Character.HumanoidRootPart
+               hrp.Size = Vector3.new(2, 2, 1)
+               hrp.Transparency = 1
+               hrp.CanCollide = true
+            end
+         end
+      end
    end,
 })
 
@@ -275,26 +289,28 @@ RunService.Stepped:Connect(function()
 end)
 
 RunService.RenderStepped:Connect(function()
+   if not killerSettings.Hitbox then return end
    local safeSize = math.clamp(hitboxSize, 2, maxHitboxSize)
+   
    for _, player in ipairs(Players:GetPlayers()) do
-      if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-         local hrp = player.Character.HumanoidRootPart
-         if killerSettings.Hitbox then
+      if player ~= LocalPlayer and player.Character then
+         local char = player.Character
+         local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+         
+         if hrp then
             hrp.Size = Vector3.new(safeSize, safeSize, safeSize)
             hrp.Transparency = 0.6
             hrp.Color = Color3.fromRGB(255, 255, 255)
             hrp.Material = Enum.Material.SmoothPlastic
             hrp.CanCollide = false
-         else
-            hrp.Size = Vector3.new(2, 2, 1)
-            hrp.Transparency = 1
          end
       end
    end
 end)
 
 
-SurvivalTab:CreateSection("Survival & Map ESP (Customizable Colors)")
+-- ==================== 3. Survival Tab (Global Map ESP) ====================
+SurvivalTab:CreateSection("Survival & Global Map ESP")
 
 local survivalSettings = {
    GeneratorESP = false,
@@ -308,7 +324,7 @@ local windowColor = Color3.fromRGB(0, 220, 255)
 local palletColor = Color3.fromRGB(220, 80, 50)
 
 SurvivalTab:CreateToggle({
-   Name = "ESP Generators (ออร่าเครื่องปั่นไฟ)",
+   Name = "ESP Generators (ออร่าเครื่องปั่นไฟทุกแมพ)",
    CurrentValue = false,
    Flag = "GenESPToggle",
    Callback = function(Value)
@@ -326,7 +342,7 @@ SurvivalTab:CreateButton({
 })
 
 SurvivalTab:CreateToggle({
-   Name = "ESP Windows (ออร่าหน้าต่าง)",
+   Name = "ESP Windows (ออร่าหน้าต่างทุกแมพ)",
    CurrentValue = false,
    Flag = "WinESPToggle",
    Callback = function(Value)
@@ -338,24 +354,21 @@ SurvivalTab:CreateButton({
    Name = "Window Color: Cyan (ฟ้า)",
    Callback = function() windowColor = Color3.fromRGB(0, 220, 255) end,
 })
-
 SurvivalTab:CreateButton({
    Name = "Window Color: Green (เขียว)",
    Callback = function() windowColor = Color3.fromRGB(0, 255, 100) end,
 })
-
 SurvivalTab:CreateButton({
    Name = "Window Color: Purple (ม่วง)",
    Callback = function() windowColor = Color3.fromRGB(180, 50, 255) end,
 })
-
 SurvivalTab:CreateButton({
    Name = "Window Color: Pink (ชมพู)",
    Callback = function() windowColor = Color3.fromRGB(255, 100, 200) end,
 })
 
 SurvivalTab:CreateToggle({
-   Name = "ESP Pallets (ออร่าไม้ที่พับได้)",
+   Name = "ESP Pallets (ออร่าไม้ที่พับได้ทุกแมพ)",
    CurrentValue = false,
    Flag = "PalletESPToggle",
    Callback = function(Value)
@@ -381,7 +394,7 @@ SurvivalTab:CreateToggle({
    end,
 })
 
-local function applyHighlight(object, colorName, isEnabled)
+local function applyGlobalHighlight(object, colorName, isEnabled)
    local hl = object:FindFirstChild("BillyzAura")
    if isEnabled then
       if not hl then
@@ -390,6 +403,7 @@ local function applyHighlight(object, colorName, isEnabled)
          hl.Adornee = object
          hl.FillTransparency = 0.4
          hl.OutlineTransparency = 0
+         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
          hl.Parent = object
       end
       hl.FillColor = colorName
@@ -401,20 +415,21 @@ local function applyHighlight(object, colorName, isEnabled)
    end
 end
 
+-- ระบบกวาดหาวัตถุ ESP ทั่วทั้ง Workspace รองรับทุกแมพ
 RunService.RenderStepped:Connect(function()
    for _, obj in ipairs(workspace:GetDescendants()) do
       local nameLower = string.lower(obj.Name)
       
-      if (string.find(nameLower, "generator") or string.find(nameLower, "gen")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
-         applyHighlight(obj, generatorColor, survivalSettings.GeneratorESP)
+      if (string.find(nameLower, "generator") or string.find(nameLower, "gen") or string.find(nameLower, "machine")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
+         applyGlobalHighlight(obj, generatorColor, survivalSettings.GeneratorESP)
       end
       
-      if (string.find(nameLower, "window") or string.find(nameLower, "vault")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
-         applyHighlight(obj, windowColor, survivalSettings.WindowESP)
+      if (string.find(nameLower, "window") or string.find(nameLower, "vault") or string.find(nameLower, "glass")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
+         applyGlobalHighlight(obj, windowColor, survivalSettings.WindowESP)
       end
       
-      if (string.find(nameLower, "pallet") or string.find(nameLower, "wood")) and not string.find(nameLower, "break") and (obj:IsA("Model") or obj:IsA("BasePart")) then
-         applyHighlight(obj, palletColor, survivalSettings.PalletESP)
+      if (string.find(nameLower, "pallet") or string.find(nameLower, "wood") or string.find(nameLower, "board") or string.find(nameLower, "door")) and not string.find(nameLower, "break") and (obj:IsA("Model") or obj:IsA("BasePart")) then
+         applyGlobalHighlight(obj, palletColor, survivalSettings.PalletESP)
       end
    end
 end)
@@ -450,6 +465,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
+-- ==================== 4. Player Tab ====================
 PlayerTab:CreateSection("Player Automation")
 
 local playerSettings = {
@@ -465,40 +481,31 @@ PlayerTab:CreateToggle({
    end,
 })
 
-RunService.RenderStepped:Connect(function()
-   if not playerSettings.AutoGenerator then return end
-   local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-   if not playerGui then return end
-   
-   for _, gui in ipairs(playerGui:GetDescendants()) do
-      if (gui:IsA("Frame") or gui:IsA("ImageLabel") or gui:IsA("TextButton") or gui:IsA("CanvasGroup")) and gui.Visible then
-         local nameLower = string.lower(gui.Name)
-         if string.find(nameLower, "check") or string.find(nameLower, "skill") or string.find(nameLower, "interactive") or string.find(nameLower, "prompt") or string.find(nameLower, "zone") or string.find(nameLower, "target") then
-            
-            local shouldClick = false
-            if gui.BackgroundColor3 then
-               local r, g, b = gui.BackgroundColor3.R, gui.BackgroundColor3.G, gui.BackgroundColor3.B
-               if (r > 0.7 and g > 0.7 and b > 0.7) or (r == 1 and g == 1 and b == 1) then
-                  shouldClick = true
+task.spawn(function()
+   while true do
+      if playerSettings.AutoGenerator then
+         local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+         if pGui then
+            for _, gui in ipairs(pGui:GetDescendants()) do
+               if gui.Visible and (gui:IsA("Frame") or gui:IsA("ImageLabel") or gui:IsA("TextButton") or gui:IsA("CanvasGroup")) then
+                  local nameLower = string.lower(gui.Name)
+                  if string.find(nameLower, "check") or string.find(nameLower, "skill") or string.find(nameLower, "interactive") or string.find(nameLower, "prompt") or string.find(nameLower, "zone") or string.find(nameLower, "target") then
+                     
+                     VirtualUser:Button1Down(Vector2.new(0,0), Camera.CFrame)
+                     task.wait(0.01)
+                     VirtualUser:Button1Up(Vector2.new(0,0), Camera.CFrame)
+                     task.wait(0.3)
+                  end
                end
-            end
-            
-            if gui:IsA("TextButton") or gui:IsA("ImageButton") then
-               shouldClick = true
-            end
-            
-            if shouldClick then
-               VirtualUser:Button1Down(Vector2.new(0,0), Camera.CFrame)
-               task.wait(0.01)
-               VirtualUser:Button1Up(Vector2.new(0,0), Camera.CFrame)
-               task.wait(0.25)
             end
          end
       end
+      task.wait(0.1)
    end
 end)
 
 
+-- ==================== 5. ESP Tab (Global Player Aura) ====================
 ESPTab:CreateSection("Player ESP (Aura)")
 
 local espSettings = {
@@ -509,7 +516,7 @@ local killerAuraColor = Color3.fromRGB(255, 50, 50)
 local survivorAuraColor = Color3.fromRGB(50, 150, 255)
 
 ESPTab:CreateToggle({
-   Name = "Enable Player ESP (ออร่าผู้เล่น)",
+   Name = "Enable Player ESP (ออร่าผู้เล่นทุกแมพ)",
    CurrentValue = false,
    Flag = "PlayerESPToggle",
    Callback = function(Value)
@@ -530,18 +537,34 @@ ESPTab:CreateButton({
    Callback = function() killerAuraColor = Color3.fromRGB(255, 50, 50) end,
 })
 ESPTab:CreateButton({
-   Name = "Killer Aura Color: Magenta (ม่วงแดง)",
-   Callback = function() killerAuraColor = Color3.fromRGB(255, 0, 128) end,
-})
-
-ESPTab:CreateButton({
    Name = "Survivor Aura Color: Blue (น้ำเงิน)",
    Callback = function() survivorAuraColor = Color3.fromRGB(50, 150, 255) end,
 })
-ESPTab:CreateButton({
-   Name = "Survivor Aura Color: Green (เขียว)",
-   Callback = function() survivorAuraColor = Color3.fromRGB(0, 255, 100) end,
-})
+
+local function checkIsKiller(player, character)
+   if character:GetAttribute("IsKiller") or character:GetAttribute("Killer") then
+      return true
+   end
+   
+   local leaderstats = player:FindFirstChild("leaderstats")
+   if leaderstats then
+      local role = leaderstats:FindFirstChild("Role") or leaderstats:FindFirstChild("Team")
+      if role and (string.lower(tostring(role.Value)) == "killer" or string.lower(tostring(role.Value)) == "ฆาตกร") then
+         return true
+      end
+   end
+   
+   for _, item in ipairs(character:GetChildren()) do
+      if item:IsA("Tool") then
+         local toolName = string.lower(item.Name)
+         if string.find(toolName, "knife") or string.find(toolName, "sword") or string.find(toolName, "bat") or string.find(toolName, "weapon") or string.find(toolName, "killer") then
+            return true
+         end
+      end
+   end
+   
+   return false
+end
 
 local function setupPlayerAura(player)
    if player == LocalPlayer then return end
@@ -559,25 +582,22 @@ local function setupPlayerAura(player)
       hl.FillTransparency = 0.4
       hl.OutlineTransparency = 0
       hl.Enabled = espSettings.Enabled
+      hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
       hl.Parent = character
       
       task.spawn(function()
          while character and character.Parent and hl.Parent do
             if espSettings.Enabled then
                hl.Enabled = true
-               
-               local isKiller = false
-               if character:GetAttribute("IsKiller") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Role") and player.leaderstats.Role.Value == "Killer") then
-                  isKiller = true
-               end
-               
+               local isKiller = checkIsKiller(player, character)
                local auraColor = isKiller and killerAuraColor or survivorAuraColor
+               
                hl.FillColor = auraColor
                hl.OutlineColor = auraColor
             else
                hl.Enabled = false
             end
-            task.wait(0.3)
+            task.wait(0.5)
          end
       end)
    end)
@@ -594,23 +614,22 @@ local function setupPlayerAura(player)
          hl.FillTransparency = 0.4
          hl.OutlineTransparency = 0
          hl.Enabled = espSettings.Enabled
+         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
          hl.Parent = character
          
          task.spawn(function()
             while character and character.Parent and hl.Parent do
                if espSettings.Enabled then
                   hl.Enabled = true
-                  local isKiller = false
-                  if character:GetAttribute("IsKiller") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Role") and player.leaderstats.Role.Value == "Killer") then
-                     isKiller = true
-                  end
+                  local isKiller = checkIsKiller(player, character)
                   local auraColor = isKiller and killerAuraColor or survivorAuraColor
+                  
                   hl.FillColor = auraColor
                   hl.OutlineColor = auraColor
                else
                   hl.Enabled = false
                end
-               task.wait(0.3)
+               task.wait(0.5)
             end
          end)
       end)
