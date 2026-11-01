@@ -2,7 +2,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
    Name = "Violence District By Billyz",
-   LoadingTitle = "Loading Fixed ESP Hub...",
+   LoadingTitle = "Loading Hub...",
    LoadingSubtitle = "By Billyz",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
@@ -10,10 +10,10 @@ local Window = Rayfield:CreateWindow({
 
 -- ==================== Tabs ====================
 local MainTab = Window:CreateTab("Main", 4483362458)
-local KillerTab = Window:CreateTab("Killer / Combat", 4483362458)
-local SurvivalTab = Window:CreateTab("Survival & Map", 4483362458)
+local KillerTab = Window:CreateTab("Combat", 4483362458)
+local SurvivalTab = Window:CreateTab("Map", 4483362458)
 local PlayerTab = Window:CreateTab("Player", 4483362458)
-local ESPTab = Window:CreateTab("ESP (Dedicated)", 4483362458)
+local ESPTab = Window:CreateTab("ESP", 4483362458) -- แท็บ ESP จะแสดงขึ้นมาแน่นอน
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -217,11 +217,11 @@ end)
 
 -- ==================== 4. Player Tab ====================
 PlayerTab:CreateSection("Player Utilities")
-PlayerTab:CreateParagraph({Title = "Info", Content = "การตั้งค่าเสริมสำหรับตัวละคร"})
+PlayerTab:CreateParagraph({Title = "Info", Content = "ฟังก์ชันเสริมสำหรับผู้เล่น"})
 
 
--- ==================== 5. ESP Tab (FIXED & DEDICATED) ====================
-ESPTab:CreateSection("1. Player ESP (ออร่าผู้เล่นแยกสี)")
+-- ==================== 5. ESP Tab (Dedicated) ====================
+ESPTab:CreateSection("1. Player ESP (แยกสีบทบาท)")
 
 local playerEspEnabled = false
 
@@ -285,7 +285,6 @@ ESPTab:CreateToggle({
    end,
 })
 
--- ลูปอัปเดตสี/ผู้เล่นเกิดใหม่ แบบไม่กิน FPS
 task.spawn(function()
    while true do
       if playerEspEnabled then
@@ -296,7 +295,7 @@ task.spawn(function()
 end)
 
 
-ESPTab:CreateSection("2. Map ESP (เครื่องปั่นไฟ / วัตถุ)")
+ESPTab:CreateSection("2. Map ESP (วัตถุในแมพ)")
 
 local genEspEnabled = false
 local itemEspEnabled = false
@@ -306,14 +305,13 @@ local function scanMapObjects()
       if obj:IsA("Model") or obj:IsA("BasePart") then
          local n = string.lower(obj.Name)
          
-         -- เครื่องปั่นไฟ / Objective / เครื่องจักร
          if genEspEnabled and (n:find("generator") or n:find("gen") or n:find("machine") or n:find("engine") or n:find("objective") or n:find("coin")) then
             local hl = obj:FindFirstChild("BillyzMapGenESP")
             if not hl then
                hl = Instance.new("Highlight")
                hl.Name = "BillyzMapGenESP"
                hl.Adornee = obj
-               hl.FillColor = Color3.fromRGB(230, 200, 50) -- สีเหลือง
+               hl.FillColor = Color3.fromRGB(230, 200, 50)
                hl.FillTransparency = 0.4
                hl.OutlineTransparency = 0
                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -321,14 +319,13 @@ local function scanMapObjects()
             end
          end
          
-         -- ไอเทม / ไม้พับ / ปืน / หน้าต่าง
          if itemEspEnabled and (n:find("pallet") or n:find("wood") or n:find("board") or n:find("gun") or n:find("drop") or n:find("window")) and not n:find("break") then
             local hl = obj:FindFirstChild("BillyzMapItemESP")
             if not hl then
                hl = Instance.new("Highlight")
                hl.Name = "BillyzMapItemESP"
                hl.Adornee = obj
-               hl.FillColor = Color3.fromRGB(255, 120, 0) -- สีส้ม
+               hl.FillColor = Color3.fromRGB(255, 120, 0)
                hl.FillTransparency = 0.4
                hl.OutlineTransparency = 0
                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -356,7 +353,7 @@ ESPTab:CreateToggle({
 })
 
 ESPTab:CreateToggle({
-   Name = "ESP Items / Pallets / Guns (ไม้พับ/ปืน/หน้าต่าง)",
+   Name = "ESP Items / Pallets / Guns (ไอเทม/ปืน)",
    CurrentValue = false,
    Callback = function(Value)
       itemEspEnabled = Value
