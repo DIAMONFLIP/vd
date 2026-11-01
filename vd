@@ -1,0 +1,646 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Violence District By Billyz",
+   LoadingTitle = "Loading Violence District...",
+   LoadingSubtitle = "By Billyz",
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = "BillyzHub",
+      FileName = "ViolenceDistrict"
+   },
+   KeySystem = false,
+   KeySettings = {
+      Title = "Billyz Hub",
+      Subtitle = "Key System",
+      Note = "No key required",
+      FileName = "Key",
+      SaveKey = false,
+      GrabKeyFromSite = false,
+      Key = {""}
+   }
+})
+
+-- ==================== Tabs ====================
+local MainTab = Window:CreateTab("Main", 4483362458)
+local KillerTab = Window:CreateTab("Killer", 4483362458)
+local SurvivalTab = Window:CreateTab("Survival", 4483362458)
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+local ESPTab = Window:CreateTab("ESP", 4483362458)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local VirtualUser = game:GetService("VirtualUser")
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ==================== Crosshair System ====================
+local CROSSHAIR_COLOR = Color3.fromRGB(255, 0, 0)
+local DOT_SIZE = 5 
+local GUI_NAME = "CrosshairGui"
+local Y_OFFSET = -20 
+
+if PlayerGui:FindFirstChild(GUI_NAME) then
+    PlayerGui[GUI_NAME]:Destroy()
+end
+
+local crosshairGui = Instance.new("ScreenGui")
+crosshairGui.Name = GUI_NAME
+crosshairGui.ResetOnSpawn = false
+crosshairGui.Enabled = false -- Jalqaba irratti cufaa dha, Menu keessaa banuu dandeessa
+crosshairGui.Parent = PlayerGui
+
+local dot = Instance.new("Frame")
+dot.Name = "Dot"
+dot.Size = UDim2.new(0, DOT_SIZE, 0, DOT_SIZE)
+dot.Position = UDim2.new(0.5, -DOT_SIZE / 2, 0.5, -DOT_SIZE / 2 + Y_OFFSET)
+dot.BackgroundColor3 = CROSSHAIR_COLOR
+dot.BorderSizePixel = 0
+dot.Parent = crosshairGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1, 0)
+corner.Parent = dot
+
+
+-- ==================== 1. Main Tab ====================
+MainTab:CreateSection("Movement & Character")
+
+local walkSpeedEnabled = false
+local currentWalkSpeed = 16
+
+MainTab:CreateToggle({
+   Name = "Enable WalkSpeed",
+   CurrentValue = false,
+   Flag = "WalkSpeedToggle",
+   Callback = function(Value)
+      walkSpeedEnabled = Value
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "Set WalkSpeed to 32",
+   Callback = function()
+      currentWalkSpeed = 32
+      if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = currentWalkSpeed
+      end
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "Reset WalkSpeed to 16",
+   Callback = function()
+      currentWalkSpeed = 16
+      if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+         LocalPlayer.Character.Humanoid.WalkSpeed = currentWalkSpeed
+      end
+   end,
+})
+
+RunService.RenderStepped:Connect(function()
+   if walkSpeedEnabled and LocalPlayer.Character then
+      local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+      if humanoid and humanoid.WalkSpeed ~= currentWalkSpeed then
+         humanoid.WalkSpeed = currentWalkSpeed
+      end
+   end
+end)
+
+local noclipEnabled = false
+MainTab:CreateToggle({
+   Name = "Noclip (เดินทะลุกำแพง)",
+   CurrentValue = false,
+   Flag = "NoclipToggle",
+   Callback = function(Value)
+      noclipEnabled = Value
+   end,
+})
+
+RunService.Stepped:Connect(function()
+   if noclipEnabled and LocalPlayer.Character then
+      for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+         if part:IsA("BasePart") and part.CanCollide then
+            part.CanCollide = false
+         end
+      end
+   end
+end)
+
+local flyEnabled = false
+MainTab:CreateToggle({
+   Name = "Fly [Press N]",
+   CurrentValue = false,
+   Flag = "FlyToggle",
+   Callback = function(Value)
+      flyEnabled = Value
+   end,
+})
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+   if not gameProcessed and input.KeyCode == Enum.KeyCode.N then
+      flyEnabled = not flyEnabled
+   end
+end)
+
+local flySpeed = 50
+RunService.RenderStepped:Connect(function()
+   if flyEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+      local hrp = LocalPlayer.Character.HumanoidRootPart
+      local camCF = Camera.CFrame
+      local moveDir = Vector3.new()
+      
+      if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCF.LookVector end
+      if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCF.LookVector end
+      if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCF.RightVector end
+      if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCF.RightVector end
+      
+      if moveDir.Magnitude > 0 then
+         hrp.Velocity = moveDir.Unit * flySpeed
+      else
+         hrp.Velocity = Vector3.new(0, 0.1, 0)
+      end
+   end
+end)
+
+local infinityJumpEnabled = false
+MainTab:CreateToggle({
+   Name = "Infinity Jump",
+   CurrentValue = false,
+   Flag = "InfJumpToggle",
+   Callback = function(Value)
+      infinityJumpEnabled = Value
+   end,
+})
+
+UserInputService.JumpRequest:Connect(function()
+   if infinityJumpEnabled and LocalPlayer.Character then
+      local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+      if humanoid then
+         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+      end
+   end
+end)
+
+-- Crosshair Toggle in Main
+MainTab:CreateToggle({
+   Name = "Crosshair (เป็งเล็งกลางจอ)",
+   CurrentValue = false,
+   Flag = "CrosshairToggle",
+   Callback = function(Value)
+      crosshairGui.Enabled = Value
+   end,
+})
+
+
+-- ==================== 2. Killer Tab ====================
+KillerTab:CreateSection("Killer Combat & Utilities")
+
+local killerSettings = {
+   FastAttack = false,
+   AntiStun = false,
+   Hitbox = false
+}
+
+local hitboxSize = 10
+local maxHitboxSize = 40
+
+KillerTab:CreateToggle({
+   Name = "Fast Attack (ฟันรัวไร้คูลดาวน์)",
+   CurrentValue = false,
+   Flag = "FastAttackToggle",
+   Callback = function(Value)
+      killerSettings.FastAttack = Value
+   end,
+})
+
+KillerTab:CreateToggle({
+   Name = "Anti Stun (กันสตันทุกชนิด)",
+   CurrentValue = false,
+   Flag = "AntiStunToggle",
+   Callback = function(Value)
+      killerSettings.AntiStun = Value
+   end,
+})
+
+KillerTab:CreateToggle({
+   Name = "Hitbox Extender (ขยาย Hitbox)",
+   CurrentValue = false,
+   Flag = "HitboxToggle",
+   Callback = function(Value)
+      killerSettings.Hitbox = Value
+   end,
+})
+
+KillerTab:CreateButton({
+   Name = "Set Hitbox Size to 10 Studs",
+   Callback = function()
+      hitboxSize = 10
+   end,
+})
+
+KillerTab:CreateButton({
+   Name = "Set Hitbox Size to 20 Studs",
+   Callback = function()
+      hitboxSize = 20
+   end,
+})
+
+KillerTab:CreateButton({
+   Name = "Set Hitbox Size to Max (40 Studs)",
+   Callback = function()
+      hitboxSize = 40
+   end,
+})
+
+RunService.RenderStepped:Connect(function()
+   if killerSettings.FastAttack and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+      VirtualUser:Button1Down(Vector2.new(0,0), Camera.CFrame)
+      VirtualUser:Button1Up(Vector2.new(0,0), Camera.CFrame)
+   end
+end)
+
+RunService.Stepped:Connect(function()
+   if killerSettings.AntiStun and LocalPlayer.Character then
+      local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+      if humanoid then
+         if humanoid:GetState() == Enum.HumanoidStateType.Stunned or humanoid:GetState() == Enum.HumanoidStateType.PlatformStanding then
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+         end
+      end
+      for _, attr in ipairs({"Stunned", "Stun", "IsStunned", "Ragdoll"}) do
+         if LocalPlayer.Character:GetAttribute(attr) ~= nil then
+            LocalPlayer.Character:SetAttribute(attr, false)
+         end
+      end
+   end
+end)
+
+RunService.RenderStepped:Connect(function()
+   local safeSize = math.clamp(hitboxSize, 2, maxHitboxSize)
+   for _, player in ipairs(Players:GetPlayers()) do
+      if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+         local hrp = player.Character.HumanoidRootPart
+         if killerSettings.Hitbox then
+            hrp.Size = Vector3.new(safeSize, safeSize, safeSize)
+            hrp.Transparency = 0.6
+            hrp.Color = Color3.fromRGB(255, 255, 255)
+            hrp.Material = Enum.Material.SmoothPlastic
+            hrp.CanCollide = false
+         else
+            hrp.Size = Vector3.new(2, 2, 1)
+            hrp.Transparency = 1
+         end
+      end
+   end
+end)
+
+
+-- ==================== 3. Survival Tab ====================
+SurvivalTab:CreateSection("Survival & Map ESP (Customizable Colors)")
+
+local survivalSettings = {
+   GeneratorESP = false,
+   WindowESP = false,
+   PalletESP = false,
+   AutoParry = false
+}
+
+-- Halluuwwan Jijjiiramoo (Customizable Colors)
+local generatorColor = Color3.fromRGB(230, 200, 50)
+local windowColor = Color3.fromRGB(0, 220, 255)
+local palletColor = Color3.fromRGB(220, 80, 50)
+
+SurvivalTab:CreateToggle({
+   Name = "ESP Generators (ออร่าเครื่องปั่นไฟ)",
+   CurrentValue = false,
+   Flag = "GenESPToggle",
+   Callback = function(Value)
+      survivalSettings.GeneratorESP = Value
+   end,
+})
+
+SurvivalTab:CreateButton({
+   Name = "Generator Color: Gold/Yellow (ทอง/เหลือง)",
+   Callback = function() generatorColor = Color3.fromRGB(230, 200, 50) end,
+})
+SurvivalTab:CreateButton({
+   Name = "Generator Color: Red (แดง)",
+   Callback = function() generatorColor = Color3.fromRGB(255, 50, 50) end,
+})
+
+SurvivalTab:CreateToggle({
+   Name = "ESP Windows (ออร่าหน้าต่าง)",
+   CurrentValue = false,
+   Flag = "WinESPToggle",
+   Callback = function(Value)
+      survivalSettings.WindowESP = Value
+   end,
+})
+
+SurvivalTab:CreateButton({
+   Name = "Window Color: Cyan (ฟ้า)",
+   Callback = function() windowColor = Color3.fromRGB(0, 220, 255) end,
+})
+
+SurvivalTab:CreateButton({
+   Name = "Window Color: Green (เขียว)",
+   Callback = function() windowColor = Color3.fromRGB(0, 255, 100) end,
+})
+
+SurvivalTab:CreateButton({
+   Name = "Window Color: Purple (ม่วง)",
+   Callback = function() windowColor = Color3.fromRGB(180, 50, 255) end,
+})
+
+SurvivalTab:CreateButton({
+   Name = "Window Color: Pink (ชมพู)",
+   Callback = function() windowColor = Color3.fromRGB(255, 100, 200) end,
+})
+
+SurvivalTab:CreateToggle({
+   Name = "ESP Pallets (ออร่าไม้ที่พับได้)",
+   CurrentValue = false,
+   Flag = "PalletESPToggle",
+   Callback = function(Value)
+      survivalSettings.PalletESP = Value
+   end,
+})
+
+SurvivalTab:CreateButton({
+   Name = "Pallet Color: Orange/Brown (ส้ม/น้ำตาล)",
+   Callback = function() palletColor = Color3.fromRGB(220, 80, 50) end,
+})
+SurvivalTab:CreateButton({
+   Name = "Pallet Color: White (ขาว)",
+   Callback = function() palletColor = Color3.fromRGB(255, 255, 255) end,
+})
+
+SurvivalTab:CreateToggle({
+   Name = "Auto Parry (บล็อกดาบอัตโนมัติ)",
+   CurrentValue = false,
+   Flag = "AutoParryToggle",
+   Callback = function(Value)
+      survivalSettings.AutoParry = Value
+   end,
+})
+
+local function applyHighlight(object, colorName, isEnabled)
+   local hl = object:FindFirstChild("BillyzAura")
+   if isEnabled then
+      if not hl then
+         hl = Instance.new("Highlight")
+         hl.Name = "BillyzAura"
+         hl.Adornee = object
+         hl.FillTransparency = 0.4
+         hl.OutlineTransparency = 0
+         hl.Parent = object
+      end
+      hl.FillColor = colorName
+      hl.OutlineColor = colorName
+   else
+      if hl then
+         hl:Destroy()
+      end
+   end
+end
+
+RunService.RenderStepped:Connect(function()
+   for _, obj in ipairs(workspace:GetDescendants()) do
+      local nameLower = string.lower(obj.Name)
+      
+      if (string.find(nameLower, "generator") or string.find(nameLower, "gen")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
+         applyHighlight(obj, generatorColor, survivalSettings.GeneratorESP)
+      end
+      
+      if (string.find(nameLower, "window") or string.find(nameLower, "vault")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
+         applyHighlight(obj, windowColor, survivalSettings.WindowESP)
+      end
+      
+      if (string.find(nameLower, "pallet") or string.find(nameLower, "wood")) and not string.find(nameLower, "break") and (obj:IsA("Model") or obj:IsA("BasePart")) then
+         applyHighlight(obj, palletColor, survivalSettings.PalletESP)
+      end
+   end
+end)
+
+RunService.RenderStepped:Connect(function()
+   if not survivalSettings.AutoParry then return end
+   if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+   
+   local myRoot = LocalPlayer.Character.HumanoidRootPart
+   
+   for _, player in ipairs(Players:GetPlayers()) do
+      if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+         local enemyChar = player.Character
+         local enemyRoot = enemyChar.HumanoidRootPart
+         
+         local isKiller = false
+         if enemyChar:GetAttribute("IsKiller") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Role") and player.leaderstats.Role.Value == "Killer") then
+            isKiller = true
+         end
+         
+         if isKiller then
+            local distance = (myRoot.Position - enemyRoot.Position).Magnitude
+            if distance <= 10 then
+               VirtualUser:Button2Down(Vector2.new(0,0), Camera.CFrame)
+               task.delay(0.1, function()
+                  VirtualUser:Button2Up(Vector2.new(0,0), Camera.CFrame)
+               end)
+               task.wait(0.5)
+            end
+         end
+      end
+   end
+end)
+
+
+-- ==================== 4. Player Tab ====================
+PlayerTab:CreateSection("Player Automation")
+
+local playerSettings = {
+   AutoGenerator = false
+}
+
+PlayerTab:CreateToggle({
+   Name = "Auto Generator (ปั่นไฟอัตโนมัติ ไม่ระเบิด)",
+   CurrentValue = false,
+   Flag = "AutoGenToggle",
+   Callback = function(Value)
+      playerSettings.AutoGenerator = Value
+   end,
+})
+
+RunService.RenderStepped:Connect(function()
+   if not playerSettings.AutoGenerator then return end
+   local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+   if not playerGui then return end
+   
+   for _, gui in ipairs(playerGui:GetDescendants()) do
+      if (gui:IsA("Frame") or gui:IsA("ImageLabel") or gui:IsA("TextButton") or gui:IsA("CanvasGroup")) and gui.Visible then
+         local nameLower = string.lower(gui.Name)
+         if string.find(nameLower, "check") or string.find(nameLower, "skill") or string.find(nameLower, "interactive") or string.find(nameLower, "prompt") or string.find(nameLower, "zone") or string.find(nameLower, "target") then
+            
+            local shouldClick = false
+            if gui.BackgroundColor3 then
+               local r, g, b = gui.BackgroundColor3.R, gui.BackgroundColor3.G, gui.BackgroundColor3.B
+               if (r > 0.7 and g > 0.7 and b > 0.7) or (r == 1 and g == 1 and b == 1) then
+                  shouldClick = true
+               end
+            end
+            
+            if gui:IsA("TextButton") or gui:IsA("ImageButton") then
+               shouldClick = true
+            end
+            
+            if shouldClick then
+               VirtualUser:Button1Down(Vector2.new(0,0), Camera.CFrame)
+               task.wait(0.01)
+               VirtualUser:Button1Up(Vector2.new(0,0), Camera.CFrame)
+               task.wait(0.25)
+            end
+         end
+      end
+   end
+end)
+
+
+-- ==================== 5. ESP Tab (Customizable Player Aura Colors) ====================
+ESPTab:CreateSection("Player ESP (Aura)")
+
+local espSettings = {
+   Enabled = false
+}
+
+-- Halluuwwan Player ESP Jijjiiramoo
+local killerAuraColor = Color3.fromRGB(255, 50, 50)
+local survivorAuraColor = Color3.fromRGB(50, 150, 255)
+
+ESPTab:CreateToggle({
+   Name = "Enable Player ESP (ออร่าผู้เล่น)",
+   CurrentValue = false,
+   Flag = "PlayerESPToggle",
+   Callback = function(Value)
+      espSettings.Enabled = Value
+      for _, p in ipairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("BillyzPlayerAura")
+            if hl then
+               hl.Enabled = Value
+            end
+         end
+      end
+   end,
+})
+
+ESPTab:CreateButton({
+   Name = "Killer Aura Color: Red (แดง)",
+   Callback = function() killerAuraColor = Color3.fromRGB(255, 50, 50) end,
+})
+ESPTab:CreateButton({
+   Name = "Killer Aura Color: Magenta (ม่วงแดง)",
+   Callback = function() killerAuraColor = Color3.fromRGB(255, 0, 128) end,
+})
+
+ESPTab:CreateButton({
+   Name = "Survivor Aura Color: Blue (น้ำเงิน)",
+   Callback = function() survivorAuraColor = Color3.fromRGB(50, 150, 255) end,
+})
+ESPTab:CreateButton({
+   Name = "Survivor Aura Color: Green (เขียว)",
+   Callback = function() survivorAuraColor = Color3.fromRGB(0, 255, 100) end,
+})
+
+local function setupPlayerAura(player)
+   if player == LocalPlayer then return end
+   
+   player.CharacterAdded:Connect(function(character)
+      local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
+      if not humanoidRootPart then return end
+      
+      local oldHl = character:FindFirstChild("BillyzPlayerAura")
+      if oldHl then oldHl:Destroy() end
+      
+      local hl = Instance.new("Highlight")
+      hl.Name = "BillyzPlayerAura"
+      hl.Adornee = character
+      hl.FillTransparency = 0.4
+      hl.OutlineTransparency = 0
+      hl.Enabled = espSettings.Enabled
+      hl.Parent = character
+      
+      task.spawn(function()
+         while character and character.Parent and hl.Parent do
+            if espSettings.Enabled then
+               hl.Enabled = true
+               
+               local isKiller = false
+               if character:GetAttribute("IsKiller") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Role") and player.leaderstats.Role.Value == "Killer") then
+                  isKiller = true
+               end
+               
+               local auraColor = isKiller and killerAuraColor or survivorAuraColor
+               hl.FillColor = auraColor
+               hl.OutlineColor = auraColor
+            else
+               hl.Enabled = false
+            end
+            task.wait(0.3)
+         end
+      end)
+   end)
+   
+   if player.Character then
+      task.spawn(function()
+         local character = player.Character
+         local oldHl = character:FindFirstChild("BillyzPlayerAura")
+         if oldHl then oldHl:Destroy() end
+         
+         local hl = Instance.new("Highlight")
+         hl.Name = "BillyzPlayerAura"
+         hl.Adornee = character
+         hl.FillTransparency = 0.4
+         hl.OutlineTransparency = 0
+         hl.Enabled = espSettings.Enabled
+         hl.Parent = character
+         
+         task.spawn(function()
+            while character and character.Parent and hl.Parent do
+               if espSettings.Enabled then
+                  hl.Enabled = true
+                  local isKiller = false
+                  if character:GetAttribute("IsKiller") or (player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Role") and player.leaderstats.Role.Value == "Killer") then
+                     isKiller = true
+                  end
+                  local auraColor = isKiller and killerAuraColor or survivorAuraColor
+                  hl.FillColor = auraColor
+                  hl.OutlineColor = auraColor
+               else
+                  hl.Enabled = false
+               end
+               task.wait(0.3)
+            end
+         end)
+      end)
+   end
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+   setupPlayerAura(p)
+end
+
+Players.PlayerAdded:Connect(setupPlayerAura)
+
+-- ==================== UI Toggle (Key M) ====================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+   if not gameProcessed and input.KeyCode == Enum.KeyCode.M then
+      if Rayfield then
+         for _, gui in ipairs(CoreGui:GetChildren()) do
+            if gui.Name == "Rayfield" then
+               gui.Enabled = not gui.Enabled
+            end
+         end
+      end
+   end
+end)
