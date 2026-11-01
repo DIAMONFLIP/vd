@@ -520,9 +520,20 @@ end
 
 Players.PlayerAdded:Connect(setupPlayerAura)
 
--- ==================== UI Toggle (Key M) ====================
+-- ==================== Reliable Toggle (Key M) ====================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.M then
-        Window:Toggle() -- ฟังก์ชันเปิด/ปิดหน้าต่างของ Starlight
+        pcall(function()
+            for _, gui in ipairs(CoreGui:GetChildren()) do
+                if gui:IsA("ScreenGui") and (gui.Name:lower():find("starlight") or gui.Name:lower():find("ui")) then
+                    gui.Enabled = not gui.Enabled
+                end
+            end
+            for _, gui in ipairs(PlayerGui:GetChildren()) do
+                if gui:IsA("ScreenGui") and (gui.Name:lower():find("starlight") or gui.Name:lower():find("ui")) then
+                    gui.Enabled = not gui.Enabled
+                end
+            end
+        end)
     end
 end)
