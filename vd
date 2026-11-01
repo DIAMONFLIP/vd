@@ -183,7 +183,7 @@ end)
 
 -- Crosshair Toggle in Main
 MainTab:CreateToggle({
-   Name = "Crosshair (เป็งเล็งกลางจอ)",
+   Name = "Crosshair (เป้าเล็งกลางจอ)",
    CurrentValue = false,
    Flag = "CrosshairToggle",
    Callback = function(Value)
