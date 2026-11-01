@@ -1,14 +1,8 @@
--- ปิดระบบแอนิเมชันของ Rayfield เพื่อลดโหลด CPU/GPU ทันทีที่รัน
-getgenv().RayfieldSettings = {
-   DisableRayfieldPrompts = true,
-   DisableBuildWarnings = true
-}
-
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Violence District By Billyz (Lite)",
-   LoadingTitle = "Loading Fast Hub...",
+   Name = "Violence District By Billyz",
+   LoadingTitle = "Loading Optimized Hub...",
    LoadingSubtitle = "By Billyz",
    ConfigurationSaving = { Enabled = false },
    KeySystem = false
@@ -31,7 +25,9 @@ local Camera = workspace.CurrentCamera
 local VirtualUser = game:GetService("VirtualUser")
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- ==================== Light Weight Crosshair ====================
+-- ==================== Crosshair System ====================
+local CROSSHAIR_COLOR = Color3.fromRGB(255, 0, 0)
+local DOT_SIZE = 5 
 local GUI_NAME = "CrosshairGui"
 if PlayerGui:FindFirstChild(GUI_NAME) then PlayerGui[GUI_NAME]:Destroy() end
 
@@ -43,9 +39,9 @@ crosshairGui.Parent = PlayerGui
 
 local dot = Instance.new("Frame")
 dot.Name = "Dot"
-dot.Size = UDim2.new(0, 5, 0, 5)
-dot.Position = UDim2.new(0.5, -2.5, 0.5, -22.5)
-dot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+dot.Size = UDim2.new(0, DOT_SIZE, 0, DOT_SIZE)
+dot.Position = UDim2.new(0.5, -DOT_SIZE / 2, 0.5, -DOT_SIZE / 2 - 20)
+dot.BackgroundColor3 = CROSSHAIR_COLOR
 dot.BorderSizePixel = 0
 dot.Parent = crosshairGui
 
@@ -55,7 +51,7 @@ corner.Parent = dot
 
 
 -- ==================== 1. Main Tab ====================
-MainTab:CreateSection("Movement & FPS Boost")
+MainTab:CreateSection("Movement & Performance")
 
 local walkSpeedEnabled = false
 local currentWalkSpeed = 16
@@ -109,7 +105,7 @@ MainTab:CreateToggle({
 })
 
 MainTab:CreateButton({
-   Name = "⚡ Ultra FPS Boost (ลบเอฟเฟกต์แมพทั้งหมด)",
+   Name = "⚡ Ultra FPS Boost (แก้หน่วง)",
    Callback = function()
       pcall(function()
          Lighting.GlobalShadows = false
@@ -168,7 +164,6 @@ RunService.RenderStepped:Connect(function()
    end
 end)
 
--- ทำงานเฉพาะเมื่อเปิดใช้งานเท่านั้น (Lazy Loop)
 task.spawn(function()
    while true do
       if killerSettings.Hitbox then
@@ -183,7 +178,7 @@ task.spawn(function()
             end
          end
       end
-      task.wait(0.5) -- หน่วงเวลาครึ่งวินาที ไม่กระตุกแน่นอน
+      task.wait(0.3)
    end
 end)
 
@@ -211,7 +206,7 @@ task.spawn(function()
       if genEsp then
          for _, obj in ipairs(workspace:GetDescendants()) do
             local n = string.lower(obj.Name)
-            if (n:find("generator") or n:find("gen") or n:find("machine")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
+            if (n:find("generator") or n:find("gen") or n:find("machine") or n:find("coin")) and (obj:IsA("Model") or obj:IsA("BasePart")) then
                if not obj:FindFirstChild("BillyzAura") then
                   local hl = Instance.new("Highlight")
                   hl.Name = "BillyzAura"
@@ -223,7 +218,7 @@ task.spawn(function()
             end
          end
       end
-      task.wait(4.0) -- สแกนห่างๆ ทุก 4 วินาที คืนเฟรมเรต 100%
+      task.wait(3.0)
    end
 end)
 
@@ -261,12 +256,12 @@ task.spawn(function()
 end)
 
 
--- ==================== 5. ESP Tab ====================
-ESPTab:CreateSection("Player ESP")
+-- ==================== 5. ESP Tab (Role-Based Player ESP) ====================
+ESPTab:CreateSection("Universal Player ESP (Role Color)")
 
 local playerEspEnabled = false
 ESPTab:CreateToggle({
-   Name = "Enable Player ESP (ออร่าผู้เล่น)",
+   Name = "Enable Player ESP (แยกสีตามบทบาท)",
    CurrentValue = false,
    Callback = function(Value)
       playerEspEnabled = Value
@@ -279,26 +274,67 @@ ESPTab:CreateToggle({
    end,
 })
 
-local function setupAura(player)
+-- ฟังก์ชันตรวจสอบบทบาทเพื่อแยกสี (ฆาตกร = แดง, ผู้รอดชีวิต/ตำรวจ = น้ำเงิน)
+local function getRoleColor(player, character)
+   if character:GetAttribute("IsKiller") or character:GetAttribute("Killer") or character:GetAttribute("Murderer") then
+      return Color3.fromRGB(255, 50, 50) -- สีแดง (Killer/Murderer)
+   end
+   
+   local backpack = player:FindFirstChild("Backpack")
+   for _, container in ipairs({character, backpack}) do
+      if container then
+         for _, item in ipairs(container:GetChildren()) do
+            if item:IsA("Tool") then
+               local tName = string.lower(item.Name)
+               if tName:find("knife") or tName:find("sword") or tName:find("bat") or tName:find("weapon") then
+                  return Color3.fromRGB(255, 50, 50) -- สีแดง (ถืออาวุธฆาตกร)
+               end
+            end
+         end
+      end
+   end
+   
+   return Color3.fromRGB(50, 150, 255) -- สีฟ้า/น้ำเงิน (Survivor / Sheriff)
+end
+
+local function setupPlayerAura(player)
    if player == LocalPlayer then return end
-   local function apply(char)
+   
+   local function applyAura(char)
       if not char then return end
       local hl = char:FindFirstChild("BillyzPlayerAura")
       if not hl then
          hl = Instance.new("Highlight")
          hl.Name = "BillyzPlayerAura"
          hl.Adornee = char
-         hl.FillTransparency = 0.5
+         hl.FillTransparency = 0.4
+         hl.OutlineTransparency = 0
+         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
          hl.Enabled = playerEspEnabled
          hl.Parent = char
       end
+      
+      -- อัปเดตสีตามบทบาทแบบเรียลไทม์
+      task.spawn(function()
+         while char and char.Parent and hl.Parent do
+            if playerEspEnabled then
+               hl.Enabled = true
+               hl.FillColor = getRoleColor(player, char)
+               hl.OutlineColor = hl.FillColor
+            else
+               hl.Enabled = false
+            end
+            task.wait(1.0)
+         end
+      end)
    end
-   player.CharacterAdded:Connect(apply)
-   if player.Character then apply(player.Character) end
+
+   player.CharacterAdded:Connect(applyAura)
+   if player.Character then applyAura(player.Character) end
 end
 
-for _, p in ipairs(Players:GetPlayers()) do setupAura(p) end
-Players.PlayerAdded:Connect(setupAura)
+for _, p in ipairs(Players:GetPlayers()) do setupPlayerAura(p) end
+Players.PlayerAdded:Connect(setupPlayerAura)
 
 
 -- ==================== UI Toggle (Key M) ====================
