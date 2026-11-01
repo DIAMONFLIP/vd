@@ -21,7 +21,6 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
--- ==================== Tabs ====================
 local MainTab = Window:CreateTab("Main", 4483362458)
 local KillerTab = Window:CreateTab("Killer", 4483362458)
 local SurvivalTab = Window:CreateTab("Survival", 4483362458)
@@ -36,7 +35,6 @@ local Camera = workspace.CurrentCamera
 local VirtualUser = game:GetService("VirtualUser")
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- ==================== Crosshair System ====================
 local CROSSHAIR_COLOR = Color3.fromRGB(255, 0, 0)
 local DOT_SIZE = 5 
 local GUI_NAME = "CrosshairGui"
@@ -49,7 +47,7 @@ end
 local crosshairGui = Instance.new("ScreenGui")
 crosshairGui.Name = GUI_NAME
 crosshairGui.ResetOnSpawn = false
-crosshairGui.Enabled = false -- Jalqaba irratti cufaa dha, Menu keessaa banuu dandeessa
+crosshairGui.Enabled = false 
 crosshairGui.Parent = PlayerGui
 
 local dot = Instance.new("Frame")
@@ -65,7 +63,6 @@ corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = dot
 
 
--- ==================== 1. Main Tab ====================
 MainTab:CreateSection("Movement & Character")
 
 local walkSpeedEnabled = false
@@ -195,7 +192,6 @@ MainTab:CreateToggle({
 })
 
 
--- ==================== 2. Killer Tab ====================
 KillerTab:CreateSection("Killer Combat & Utilities")
 
 local killerSettings = {
@@ -298,7 +294,6 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- ==================== 3. Survival Tab ====================
 SurvivalTab:CreateSection("Survival & Map ESP (Customizable Colors)")
 
 local survivalSettings = {
@@ -308,7 +303,6 @@ local survivalSettings = {
    AutoParry = false
 }
 
--- Halluuwwan Jijjiiramoo (Customizable Colors)
 local generatorColor = Color3.fromRGB(230, 200, 50)
 local windowColor = Color3.fromRGB(0, 220, 255)
 local palletColor = Color3.fromRGB(220, 80, 50)
@@ -456,7 +450,6 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- ==================== 4. Player Tab ====================
 PlayerTab:CreateSection("Player Automation")
 
 local playerSettings = {
@@ -506,14 +499,12 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
--- ==================== 5. ESP Tab (Customizable Player Aura Colors) ====================
 ESPTab:CreateSection("Player ESP (Aura)")
 
 local espSettings = {
    Enabled = false
 }
 
--- Halluuwwan Player ESP Jijjiiramoo
 local killerAuraColor = Color3.fromRGB(255, 50, 50)
 local survivorAuraColor = Color3.fromRGB(50, 150, 255)
 
