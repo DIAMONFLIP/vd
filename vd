@@ -1,16 +1,13 @@
-local library = loadstring(game:GetObjects("rbxassetid://7657867786")[1].Source)()
-local Wait = library.subs.Wait
+local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/main/source.lua"))()
 
-local Window = library:CreateWindow({
-    Name = "Violence District By Billyz",
-    Themeable = {
-        Info = "Violence District & MM2 Universal Hub"
-    }
+local Window = Starlight:CreateWindow({
+    Name = "Violence District By Billyz"
 })
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -46,36 +43,35 @@ corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = dot
 
 
+-- ==================== Tabs ====================
+local MainTab = Window:CreateTab("Main")
+local KillerTab = Window:CreateTab("Killer / Combat")
+local SurvivalTab = Window:CreateTab("Survival & Map")
+local PlayerTab = Window:CreateTab("Player")
+local ESPTab = Window:CreateTab("ESP (Universal)")
+
+
 -- ==================== 1. Main Tab ====================
-local MainTab = Window:CreateTab({ Name = "Main" })
-
-local MovementSection = MainTab:CreateSection({ Name = "Movement & Character" })
-local PerformanceSection = MainTab:CreateSection({ Name = "Performance & Crosshair", Side = "Right" })
-
 local walkSpeedEnabled = false
 local currentWalkSpeed = 16
 
-MovementSection:AddToggle({
-    Name = "Enable WalkSpeed",
-    Flag = "WalkSpeed_Toggle",
-    Callback = function(state)
-        walkSpeedEnabled = state
-    end
-})
+MainTab:AddToggle("Enable WalkSpeed", false, function(state)
+    walkSpeedEnabled = state
+end)
 
-MovementSection:AddSlider({
-    Name = "WalkSpeed Value",
-    Flag = "WalkSpeed_Value",
-    Value = 16,
-    Min = 16,
-    Max = 100,
-    Callback = function(val)
-        currentWalkSpeed = val
-        if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = currentWalkSpeed
-        end
+MainTab:AddButton("Set WalkSpeed to 32", function()
+    currentWalkSpeed = 32
+    if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = currentWalkSpeed
     end
-})
+end)
+
+MainTab:AddButton("Reset WalkSpeed to 16", function()
+    currentWalkSpeed = 16
+    if walkSpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = currentWalkSpeed
+    end
+end)
 
 RunService.RenderStepped:Connect(function()
     if walkSpeedEnabled and LocalPlayer.Character then
@@ -87,13 +83,9 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local noclipEnabled = false
-MovementSection:AddToggle({
-    Name = "Noclip (เดินทะลุกำแพง)",
-    Flag = "Noclip_Toggle",
-    Callback = function(state)
-        noclipEnabled = state
-    end
-})
+MainTab:AddToggle("Noclip (เดินทะลุกำแพง)", false, function(state)
+    noclipEnabled = state
+end)
 
 RunService.Stepped:Connect(function()
     if noclipEnabled and LocalPlayer.Character then
@@ -106,14 +98,15 @@ RunService.Stepped:Connect(function()
 end)
 
 local flyEnabled = false
-MovementSection:AddToggle({
-    Name = "Fly (บิน) [Press N]",
-    Flag = "Fly_Toggle",
-    Keybind = Enum.KeyCode.N,
-    Callback = function(state)
-        flyEnabled = state
+MainTab:AddToggle("Fly [Press N]", false, function(state)
+    flyEnabled = state
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.N then
+        flyEnabled = not flyEnabled
     end
-})
+end)
 
 local flySpeed = 50
 RunService.RenderStepped:Connect(function()
@@ -136,13 +129,9 @@ RunService.RenderStepped:Connect(function()
 end)
 
 local infinityJumpEnabled = false
-MovementSection:AddToggle({
-    Name = "Infinity Jump",
-    Flag = "InfJump_Toggle",
-    Callback = function(state)
-        infinityJumpEnabled = state
-    end
-})
+MainTab:AddToggle("Infinity Jump", false, function(state)
+    infinityJumpEnabled = state
+end)
 
 UserInputService.JumpRequest:Connect(function()
     if infinityJumpEnabled and LocalPlayer.Character then
@@ -153,44 +142,32 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
-PerformanceSection:AddToggle({
-    Name = "Crosshair (เป้าเล็งกลางจอ)",
-    Flag = "Crosshair_Toggle",
-    Callback = function(state)
-        crosshairGui.Enabled = state
-    end
-})
+MainTab:AddToggle("Crosshair (เป้าเล็งกลางจอ)", false, function(state)
+    crosshairGui.Enabled = state
+end)
 
-PerformanceSection:AddButton({
-    Name = "🚀 Anti-Lag / Boost FPS (แก้หน่วง)",
-    Callback = function()
-        pcall(function()
-            Lighting.GlobalShadows = false
-            Lighting.Brightness = 2
-            for _, v in ipairs(Lighting:GetChildren()) do
-                if v:IsA("PostEffect") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("Sky") then
-                    v:Destroy()
-                end
+MainTab:AddButton("🚀 Anti-Lag / Boost FPS (แก้หน่วง)", function()
+    pcall(function()
+        Lighting.GlobalShadows = false
+        Lighting.Brightness = 2
+        for _, v in ipairs(Lighting:GetChildren()) do
+            if v:IsA("PostEffect") or v:IsA("Atmosphere") or v:IsA("Clouds") or v:IsA("Sky") then
+                v:Destroy()
             end
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") then
-                    obj.Material = Enum.Material.SmoothPlastic
-                    obj.Reflectance = 0
-                elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                    obj:Destroy()
-                end
+        end
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.Reflectance = 0
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj:Destroy()
             end
-        end)
-    end
-})
+        end
+    end)
+end)
 
 
 -- ==================== 2. Killer / Combat Tab ====================
-local KillerTab = Window:CreateTab({ Name = "Killer / Combat" })
-
-local CombatSection = KillerTab:CreateSection({ Name = "Attacks & Stun" })
-local HitboxSection = KillerTab:CreateSection({ Name = "Hitbox Extender", Side = "Right" })
-
 local killerSettings = {
     FastAttack = false,
     AntiStun = false,
@@ -200,50 +177,39 @@ local killerSettings = {
 local hitboxSize = 10
 local maxHitboxSize = 40
 
-CombatSection:AddToggle({
-    Name = "Fast Attack (ฟันรัวไร้คูลดาวน์)",
-    Flag = "FastAttack_Toggle",
-    Callback = function(state)
-        killerSettings.FastAttack = state
-    end
-})
+KillerTab:AddToggle("Fast Attack (ฟันรัวไร้คูลดาวน์)", false, function(state)
+    killerSettings.FastAttack = state
+end)
 
-CombatSection:AddToggle({
-    Name = "Anti Stun (กันสตันทุกชนิด)",
-    Flag = "AntiStun_Toggle",
-    Callback = function(state)
-        killerSettings.AntiStun = state
-    end
-})
+KillerTab:AddToggle("Anti Stun (กันสตันทุกชนิด)", false, function(state)
+    killerSettings.AntiStun = state
+end)
 
-HitboxSection:AddToggle({
-    Name = "Hitbox Extender (ขยาย Hitbox)",
-    Flag = "Hitbox_Toggle",
-    Callback = function(state)
-        killerSettings.Hitbox = state
-        if not state then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local hrp = player.Character.HumanoidRootPart
-                    hrp.Size = Vector3.new(2, 2, 1)
-                    hrp.Transparency = 1
-                    hrp.CanCollide = true
-                end
+KillerTab:AddToggle("Hitbox Extender (ขยาย Hitbox ทุกแมพ)", false, function(state)
+    killerSettings.Hitbox = state
+    if not state then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = player.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+                hrp.CanCollide = true
             end
         end
     end
-})
+end)
 
-HitboxSection:AddSlider({
-    Name = "Hitbox Size",
-    Flag = "Hitbox_Size",
-    Value = 10,
-    Min = 5,
-    Max = 40,
-    Callback = function(val)
-        hitboxSize = val
-    end
-})
+KillerTab:AddButton("Set Hitbox Size to 10 Studs", function()
+    hitboxSize = 10
+end)
+
+KillerTab:AddButton("Set Hitbox Size to 20 Studs", function()
+    hitboxSize = 20
+end)
+
+KillerTab:AddButton("Set Hitbox Size to Max (40 Studs)", function()
+    hitboxSize = 40
+end)
 
 RunService.RenderStepped:Connect(function()
     if killerSettings.FastAttack and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
@@ -290,11 +256,6 @@ end)
 
 
 -- ==================== 3. Survival & Map Tab ====================
-local SurvivalTab = Window:CreateTab({ Name = "Survival & Map" })
-
-local MapESPSection = SurvivalTab:CreateSection({ Name = "Universal Map ESP" })
-local AutomationSection = SurvivalTab:CreateSection({ Name = "Auto Actions", Side = "Right" })
-
 local survivalSettings = {
     GeneratorESP = false,
     WindowESP = false,
@@ -306,37 +267,30 @@ local generatorColor = Color3.fromRGB(230, 200, 50)
 local windowColor = Color3.fromRGB(0, 220, 255)
 local palletColor = Color3.fromRGB(220, 80, 50)
 
-MapESPSection:AddToggle({
-    Name = "ESP Generators / Objectives",
-    Flag = "GenESP_Toggle",
-    Callback = function(state)
-        survivalSettings.GeneratorESP = state
-    end
-})
+SurvivalTab:AddToggle("ESP Generators / Objectives", false, function(state)
+    survivalSettings.GeneratorESP = state
+end)
 
-MapESPSection:AddToggle({
-    Name = "ESP Windows / Doors",
-    Flag = "WinESP_Toggle",
-    Callback = function(state)
-        survivalSettings.WindowESP = state
-    end
-})
+SurvivalTab:AddButton("Color: Gold/Yellow (ทอง/เหลือง)", function() generatorColor = Color3.fromRGB(230, 200, 50) end)
+SurvivalTab:AddButton("Color: Red (แดง)", function() generatorColor = Color3.fromRGB(255, 50, 50) end)
 
-MapESPSection:AddToggle({
-    Name = "ESP Pallets / Items / Guns",
-    Flag = "PalletESP_Toggle",
-    Callback = function(state)
-        survivalSettings.PalletESP = state
-    end
-})
+SurvivalTab:AddToggle("ESP Windows / Doors", false, function(state)
+    survivalSettings.WindowESP = state
+end)
 
-AutomationSection:AddToggle({
-    Name = "Auto Parry (บล็อกดาบอัตโนมัติ)",
-    Flag = "AutoParry_Toggle",
-    Callback = function(state)
-        survivalSettings.AutoParry = state
-    end
-})
+SurvivalTab:AddButton("Color: Cyan (ฟ้า)", function() windowColor = Color3.fromRGB(0, 220, 255) end)
+SurvivalTab:AddButton("Color: Purple (ม่วง)", function() windowColor = Color3.fromRGB(180, 50, 255) end)
+
+SurvivalTab:AddToggle("ESP Pallets / Items / Guns", false, function(state)
+    survivalSettings.PalletESP = state
+end)
+
+SurvivalTab:AddButton("Color: Orange/Brown (ส้ม/น้ำตาล)", function() palletColor = Color3.fromRGB(220, 80, 50) end)
+SurvivalTab:AddButton("Color: White (ขาว)", function() palletColor = Color3.fromRGB(255, 255, 255) end)
+
+SurvivalTab:AddToggle("Auto Parry (บล็อกดาบอัตโนมัติ)", false, function(state)
+    survivalSettings.AutoParry = state
+end)
 
 local function applyGlobalHighlight(object, colorName, isEnabled)
     local hl = object:FindFirstChild("BillyzAura")
@@ -379,21 +333,13 @@ end)
 
 
 -- ==================== 4. Player Tab ====================
-local PlayerTab = Window:CreateTab({ Name = "Player" })
-
-local GenAutomationSection = PlayerTab:CreateSection({ Name = "Generator Automation" })
-
 local playerSettings = {
     AutoGenerator = false
 }
 
-GenAutomationSection:AddToggle({
-    Name = "Auto Generator (ปั่นไฟอัตโนมัติ ไม่ระเบิด)",
-    Flag = "AutoGen_Toggle",
-    Callback = function(state)
-        playerSettings.AutoGenerator = state
-    end
-})
+PlayerTab:AddToggle("Auto Generator (ปั่นไฟอัตโนมัติ ไม่ระเบิด)", false, function(state)
+    playerSettings.AutoGenerator = state
+end)
 
 task.spawn(function()
     while true do
@@ -419,10 +365,6 @@ end)
 
 
 -- ==================== 5. ESP Tab ====================
-local ESPTab = Window:CreateTab({ Name = "ESP (Universal)" })
-
-local PlayerESPSection = ESPTab:CreateSection({ Name = "Player Aura Settings" })
-
 local espSettings = {
     Enabled = false
 }
@@ -431,21 +373,20 @@ local killerAuraColor = Color3.fromRGB(255, 50, 50)
 local sheriffAuraColor = Color3.fromRGB(50, 150, 255)
 local survivorAuraColor = Color3.fromRGB(50, 150, 255)
 
-PlayerESPSection:AddToggle({
-    Name = "Enable Player ESP (ออร่าผู้เล่นทุกแมพ)",
-    Flag = "PlayerESP_Toggle",
-    Callback = function(state)
-        espSettings.Enabled = state
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                local hl = p.Character:FindFirstChild("BillyzPlayerAura")
-                if hl then
-                    hl.Enabled = state
-                end
+ESPTab:AddToggle("Enable Player ESP (ออร่าผู้เล่นทุกแมพ)", false, function(state)
+    espSettings.Enabled = state
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hl = p.Character:FindFirstChild("BillyzPlayerAura")
+            if hl then
+                hl.Enabled = state
             end
         end
     end
-})
+end)
+
+ESPTab:AddButton("Killer / Murderer Color: Red (แดง)", function() killerAuraColor = Color3.fromRGB(255, 50, 50) end)
+ESPTab:AddButton("Innocent / Survival Color: Blue (น้ำเงิน)", function() survivorAuraColor = Color3.fromRGB(50, 150, 255) end)
 
 local function getPlayerRole(player, character)
     if character:GetAttribute("IsKiller") or character:GetAttribute("Killer") or character:GetAttribute("Murderer") then
@@ -578,3 +519,10 @@ for _, p in ipairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(setupPlayerAura)
+
+-- ==================== UI Toggle (Key M) ====================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.M then
+        Window:Toggle() -- ฟังก์ชันเปิด/ปิดหน้าต่างของ Starlight
+    end
+end)
